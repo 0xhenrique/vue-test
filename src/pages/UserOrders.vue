@@ -46,7 +46,6 @@
       hide-default-actions
     >
       <h1 class="va-h5">{{ orderToEdit.product ? "Edit order" : "Add order" }}</h1>
-      <p>{{JSON.stringify(orderToEdit)}}</p>
       <EditUserForm
 	ref="editFormRef"
 	:order="orderToEdit"
