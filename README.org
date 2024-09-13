@@ -1,12 +1,19 @@
-* Vue test
-*** Set up the front-end
-Clone this repo
-```
-git clone git@github.com:henrique-marques-vsoft/vue-test.git
-```
-Run npm install
-Rename the `.env.example` to just `.env`
-Then run `npm run dev`
+#+TITLE: vue-test
+#+LANGUAGE: en
 
-Then go to `http://localhost:5173/`
-And it's done. If you want to lookup the user's orders you can just click on the user name or click on the `Orders` button on the last column of the table.
+** Set up the front-end
+Clone this repo:
+
+ #+begin_src 
+git clone git@github.com:henrique-marques-vsoft/vue-test.git
+ #+end_src
+
+Run =npm install=
+
+Rename the =.env.example= to just =.env=
+
+Then run =npm run dev=
+
+Then go to http://localhost:5173/
+
+And it's done. If you want to lookup the user's orders you can just click on the user name or click on the =Orders= button on the last column of the table.
