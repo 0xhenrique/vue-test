@@ -8,13 +8,13 @@
 	    <VaIcon name="search" color="secondary" size="small" />
 	  </template>
 	</VaInput>
-	<VaButton @click="showAddUserModal">Add Order</VaButton>
+	<VaButton @click="showAddOrderModal">Add Order</VaButton>
       </div>
 
-      <UsersTable
-        :users="orders"
-        @edit-user="showEditUserModal"
-        @delete-user="deleteUser"
+      <OrdersTable
+        :orders="paginatedOrders"
+        @edit-order="showEditOrderModal"
+        @delete-order="deleteOrder"
       />
 
       <div class="pagination-controls">
@@ -27,21 +27,22 @@
 
   <VaModal
     v-slot="{ cancel, ok }"
-    v-model="doShowEditUserModal"
+    v-model="doShowEditOrderModal"
     size="small"
     mobile-fullscreen
     close-button
     hide-default-actions
   >
-    <h1 class="va-h5">{{ userToEdit ? "Edit user" : "Add user" }}</h1>
+    <h1 class="va-h5">{{ orderToEdit ? "Edit order" : "Add order" }}</h1>
     <EditUserForm
       ref="editFormRef"
-      :user="userToEdit"
-      :save-button-label="userToEdit ? 'Save' : 'Add'"
+      :order="orderToEdit"
+      :user="null"
+      :save-button-label="orderToEdit ? 'Save' : 'Add'"
       @close="cancel"
       @save="
-        (user) => {
-          onUserSaved(user);
+        (order) => {
+          onOrderSaved(order);
           ok();
         }
       "
@@ -51,7 +52,8 @@
 
 <script setup lang="ts">
  import { ref, onMounted, computed } from "vue";
- import UsersTable from "../components/UsersTable.vue";
+ import { useRoute } from 'vue-router';
+ import OrdersTable from "../components/OrdersTable.vue";
  import EditUserForm from "../components/EditUserForm.vue";
  import { User } from "./types";
  import { OrderStore } from "../stores/orders.ts";
@@ -59,11 +61,12 @@
 
  const { init: notify } = useToast();
  const { confirm } = useModal();
+const route = useRoute();
 
  const store = OrderStore();
  const orders = ref([]);
- const userToEdit = ref<User | null>(null);
- const doShowEditUserModal = ref(false);
+ const orderToEdit = ref<User | null>(null);
+ const doShowEditOrderModal = ref(false);
  const editFormRef = ref();
  const searchTerm = ref("");
  const currentPage = ref(1);
@@ -71,20 +74,21 @@
  const totalOrders = computed(() => orders.value.length);
 
  onMounted(async () => {
-   await store.getOrderList();
+   await store.getOrderList(route.params.id);
+   // await store.setTestOrder();
+
    orders.value = store.orderList;
  });
 
-    // Have to fix this for orders
- const filteredUsers = computed(() => {
+
+ const filteredOrders = computed(() => {
    if (!searchTerm.value) {
      return orders.value;
    }
    
-   return orders.value.filter((user) => {
+   return orders.value.filter((order) => {
      return (
-       user.fullName.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-       user.email.toLowerCase().includes(searchTerm.value.toLowerCase())
+       order.product.toLowerCase().includes(searchTerm.value.toLowerCase())
      );
    });
  });
@@ -92,7 +96,7 @@
  const paginatedOrders = computed(() => {
    const start = (currentPage.value - 1) * itemsPerPage.value;
    const end = start + itemsPerPage.value;
-   return filteredUsers.value.slice(start, end);
+   return filteredOrders.value.slice(start, end);
  });
 
  const nextPage = () => {
@@ -107,52 +111,53 @@
    }
  };
 
- const editOrder = async (order: User) => {
-   console.log("Edit user:", order);
-   await store.updateOrderById({
-     fullName: user.fullName,
-     email: user.email,
-     id: user.id
+ const addOrder = async (newOrder) => {
+   await store.setNewOrder({
+     orderDate: newOrder.dateOrder,
+     product: newOrder.product,
+     userId: newOrder.userId,
    });
  };
 
- const deleteUser = async (user: User) => {
-   console.log("user to delete: ", user.id);
-   await store.deleteUserById(user.id);
- }
-
- const addUser = async (newUser) => {
-   console.log("addUser func", newUser.fullName)
-   await store.setNewUser({
-     fullName: newUser.fullName,
-     email: newUser.email,
-     password: newUser.password
-   })
+ const editOrder = async (order: Order) => {
+   await store.updateOrderById({
+     orderDate: order.dateOrder,
+     product: order.product,
+     id: order.id,
+   });
  };
 
- const onUserSaved = async (user: User) => {
-   if (userToEdit.value) {
-     await editUser(user);
+ const deleteOrder = async (order: User) => {
+   await store.deleteOrderById(order.id);
+ }
+
+ const onOrderSaved = async (order: Order) => {
+   if (orderToEdit.value?.id) {
+     await editOrder(order);
      notify({
-       message: "User has been updated",
+       message: "Order has been updated",
        color: "success",
      });
    } else {
-     await addUser(user);
+     await addOrder(order);
      notify({
-       message: "New user has been created",
+       message: "New order has been created",
        color: "success",
      });
    }
  };
 
- const showEditUserModal = (user: User) => {
-   userToEdit.value = user;
-   doShowEditUserModal.value = true;
+ const showEditOrderModal = (order: User) => {
+   orderToEdit.value = order;
+   doShowEditOrderModal.value = true;
  };
 
- const showAddUserModal = () => {
-   userToEdit.value = null;
-   doShowEditUserModal.value = true;
- };
+const showAddOrderModal = (userId: string) => {
+  orderToEdit.value = {
+    userId: route.params.id,
+    product: '',
+    dateOrder: new Date().toISOString(),
+  };
+  doShowEditOrderModal.value = true;
+};
 </script>

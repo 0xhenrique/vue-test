@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import axios from "axios";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const UserStore = defineStore("user", () => {
   const isLoading = ref(false);
@@ -14,7 +15,7 @@ export const UserStore = defineStore("user", () => {
   const getUserList = async () => {
     try {
       isLoading.value = true;
-      const response = await axios.get("http://localhost:3333/users");
+      const response = await axios.get(`${API_BASE_URL}/users`);
       userList.value = response.data;
       isLoading.value = false;
     } catch (err) {
@@ -26,7 +27,7 @@ export const UserStore = defineStore("user", () => {
   const updateUserById = async ({ fullName, email, id }: { fullName: string, email: string, id: number }) => {
     try {
       isLoading.value = true;
-      const request = await axios.put(`http://localhost:3333/user/${id}/edit`, {
+      const request = await axios.put(`${API_BASE_URL}/user/${id}/edit`, {
 	fullName: fullName,
 	email: email
       });
@@ -41,7 +42,7 @@ export const UserStore = defineStore("user", () => {
   const deleteUserById = async (id: number) => {
     try {
       isLoading.value = true;
-      const request = await axios.delete(`http://localhost:3333/users/${id}`);
+      const request = await axios.delete(`${API_BASE_URL}/users/${id}`);
       isLoading.value = false;
       return request.data;
     } catch(err) {
@@ -52,7 +53,7 @@ export const UserStore = defineStore("user", () => {
   const setNewUser = async ({ fullName, email, password }: { fullName: string, email: string, password: string }) => {
     try {
       isLoading.value = true;
-      const request = await axios.post("http://localhost:3333/users", {
+      const request = await axios.post(`${API_BASE_URL}/users`, {
 	fullName: fullName,
 	email: email,
 	password: password

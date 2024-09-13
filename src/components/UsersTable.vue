@@ -5,9 +5,11 @@
     :loading="$props.loading"
   >
     <template #cell(fullName)="{ rowData }">
-      <div>{{ rowData.fullName }}</div>
+      <router-link :to="{ path: `/user/${rowData.id}` }" class="va-link">
+	{{ rowData.fullName }}
+      </router-link>
     </template>
-
+    
     <template #cell(email)="{ rowData }">
       <div>{{ rowData.email }}</div>
     </template>
@@ -24,14 +26,18 @@
       <div class="flex gap-2 justify-end">
         <VaButton
           preset="primary"
-          size="small"
+	  :to="{ path: `/user/${rowData.id}` }"
+        >
+          Orders
+        </VaButton>
+        <VaButton
+          preset="primary"
           @click="$emit('edit-user', rowData)"
         >
           Edit
         </VaButton>
         <VaButton
           preset="primary"
-          size="small"
           color="danger"
           @click="onUserDelete(rowData)"
         >
@@ -51,7 +57,7 @@ const columns = defineVaDataTableColumns([
   { label: "Email", key: "email", sortable: true },
   { label: "Created", key: "createdAt", sortable: true },
   { label: "Last update", key: "updatedAt", sortable: true },
-  { label: "Actions", key: "actions", align: "right" },
+  { label: " ", key: "actions", align: "right" },
 ]);
 
 const props = defineProps({
