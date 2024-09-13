@@ -27,9 +27,11 @@
           @delete-order="deleteOrder"
 	/>
 
-	<div class="pagination-controls">
+	<VaDivider />
+
+	<div class="flex flex-row justify-center gap-2 mt-5">
 	  <VaButton @click="prevPage" :disabled="currentPage === 1">Previous</VaButton>
-	  <span>Page {{ currentPage }} of {{ Math.ceil(totalOrders / itemsPerPage) }}</span>
+	  <p class="leading-none self-center">Page {{ currentPage }} of {{ Math.ceil(totalOrders / itemsPerPage) }}</p>
 	  <VaButton @click="nextPage" :disabled="currentPage * itemsPerPage >= totalOrders">Next</VaButton>
 	</div>
       </VaCardContent>
@@ -43,12 +45,13 @@
       close-button
       hide-default-actions
     >
-      <h1 class="va-h5">{{ orderToEdit ? "Edit order" : "Add order" }}</h1>
+      <h1 class="va-h5">{{ orderToEdit.product ? "Edit order" : "Add order" }}</h1>
+      <p>{{JSON.stringify(orderToEdit)}}</p>
       <EditUserForm
 	ref="editFormRef"
 	:order="orderToEdit"
 	:user="null"
-	:save-button-label="orderToEdit ? 'Save' : 'Add'"
+	:save-button-label="orderToEdit.product ? 'Save' : 'Add'"
 	@close="cancel"
 	@save="
         (order) => {

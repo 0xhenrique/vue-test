@@ -18,9 +18,11 @@
           @delete-user="deleteUser"
 	/>
 
-	<div class="pagination-controls">
+	<VaDivider />
+
+	<div class="flex flex-row justify-center gap-2 mt-5">
 	  <VaButton @click="prevPage" :disabled="currentPage === 1">Previous</VaButton>
-	  <span>Page {{ currentPage }} of {{ Math.ceil(totalUsers / itemsPerPage) }}</span>
+	  <p class="leading-none self-center">Page {{ currentPage }} of {{ Math.ceil(totalUsers / itemsPerPage) }}</p>
 	  <VaButton @click="nextPage" :disabled="currentPage * itemsPerPage >= totalUsers">Next</VaButton>
 	</div>
       </VaCardContent>
