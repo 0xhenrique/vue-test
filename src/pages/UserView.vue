@@ -1,58 +1,62 @@
 <template>
-  <h1>User View</h1>
-  <VaCard>
-    <VaCardContent>
-      <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
-	<VaInput v-model="searchTerm" placeholder="Search">
-	  <template #prependInner>
-	    <VaIcon name="search" color="secondary" size="small" />
-	  </template>
-	</VaInput>
-	<VaButton @click="showAddUserModal">Add User</VaButton>
-      </div>
+  <AppLayout>
+    <h1 class="text-2xl pb-5 text-white">Users list</h1>
+    <VaCard>
+      <VaCardContent>
+	<div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
+	  <VaInput v-model="searchTerm" placeholder="Search">
+	    <template #prependInner>
+	      <VaIcon name="search" color="secondary" size="small" />
+	    </template>
+	  </VaInput>
+	  <VaButton @click="showAddUserModal">Add User</VaButton>
+	</div>
 
-      <UsersTable
-        :users="paginatedUsers"
-        @edit-user="showEditUserModal"
-        @delete-user="deleteUser"
-      />
+	<UsersTable
+          :users="paginatedUsers"
+          @edit-user="showEditUserModal"
+          @delete-user="deleteUser"
+	/>
 
-      <div class="pagination-controls">
-	<VaButton @click="prevPage" :disabled="currentPage === 1">Previous</VaButton>
-	<span>Page {{ currentPage }} of {{ Math.ceil(totalUsers / itemsPerPage) }}</span>
-	<VaButton @click="nextPage" :disabled="currentPage * itemsPerPage >= totalUsers">Next</VaButton>
-      </div>
-    </VaCardContent>
-  </VaCard>
+	<div class="pagination-controls">
+	  <VaButton @click="prevPage" :disabled="currentPage === 1">Previous</VaButton>
+	  <span>Page {{ currentPage }} of {{ Math.ceil(totalUsers / itemsPerPage) }}</span>
+	  <VaButton @click="nextPage" :disabled="currentPage * itemsPerPage >= totalUsers">Next</VaButton>
+	</div>
+      </VaCardContent>
+    </VaCard>
 
-  <VaModal
-    v-slot="{ cancel, ok }"
-    v-model="doShowEditUserModal"
-    size="small"
-    mobile-fullscreen
-    close-button
-    hide-default-actions
-  >
-    <h1 class="va-h5">{{ userToEdit ? "Edit user" : "Add user" }}</h1>
-    <EditUserForm
-      ref="editFormRef"
-      :user="userToEdit"
-      :save-button-label="userToEdit ? 'Save' : 'Add'"
-      @close="cancel"
-      @save="
+    <VaModal
+      v-slot="{ cancel, ok }"
+      v-model="doShowEditUserModal"
+      size="small"
+      mobile-fullscreen
+      close-button
+      hide-default-actions
+    >
+      <h1 class="va-h5">{{ userToEdit ? "Edit user" : "Add user" }}</h1>
+      <EditUserForm
+	ref="editFormRef"
+	:user="userToEdit"
+	:save-button-label="userToEdit ? 'Save' : 'Add'"
+	@close="cancel"
+	@save="
         (user) => {
           onUserSaved(user);
           ok();
         }
-      "
-    />
-  </VaModal>
+	"
+      />
+    </VaModal>
+    <h3 class="text-white pt-5">Tip: To view the user's orders list you can also click on the user's name.</h3>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
  import { ref, onMounted, computed } from "vue";
  import UsersTable from "../components/UsersTable.vue";
  import EditUserForm from "../components/EditUserForm.vue";
+ import AppLayout from "../components/AppLayout.vue";
  import { User } from "./types";
  import { UserStore } from "../stores/users.ts";
  import { useModal, useToast } from "vuestic-ui";
@@ -109,7 +113,6 @@
  };
 
  const editUser = async (user: User) => {
-   console.log("Edit user:", user);
    await store.updateUserById({
      fullName: user.fullName,
      email: user.email,
@@ -118,17 +121,16 @@
  };
 
  const deleteUser = async (user: User) => {
-   console.log("user to delete: ", user.id);
    await store.deleteUserById(user.id);
+   users.value = users.value.filter(o => o.id !== user.id);
  }
 
  const addUser = async (newUser) => {
-   console.log("addUser func", newUser.fullName)
    await store.setNewUser({
      fullName: newUser.fullName,
      email: newUser.email,
      password: newUser.password
-   })
+   });
  };
 
  const onUserSaved = async (user: User) => {
@@ -145,6 +147,9 @@
        color: "success",
      });
    }
+
+   await store.getUserList();
+   users.value = store.userList;
  };
 
  const showEditUserModal = (user: User) => {
