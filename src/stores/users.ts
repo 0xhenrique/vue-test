@@ -1,12 +1,13 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import axios from "axios";
+import { User } from "../utils/types"
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const UserStore = defineStore("user", () => {
   const isLoading = ref(false);
-  const userList = ref<Array<any>>([]);
-  const userInfo = ref<{ fullName: string; email: string, password: string }>({
+  const userList = ref<Array<User>>([]);
+  const userInfo = ref<User>({
     fullName: "",
     email: "",
     password: ""

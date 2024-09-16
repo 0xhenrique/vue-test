@@ -14,12 +14,12 @@
       <div>{{ rowData.email }}</div>
     </template>
 
-    <template #cell(createdAt)="{ rowData }">
-      <div>{{ rowData.createdAt }}</div>
+    <template #cell(created_at)="{ rowData }">
+      <div>{{ rowData.created_at }}</div>
     </template>
 
-    <template #cell(updatedAt)="{ rowData }">
-      <div>{{ rowData.updatedAt }}</div>
+    <template #cell(updated_at)="{ rowData }">
+      <div>{{ rowData.updated_at }}</div>
     </template>
 
     <template #cell(actions)="{ rowData }">
@@ -50,7 +50,8 @@
 
 <script setup lang="ts">
 import { defineVaDataTableColumns } from "vuestic-ui";
-import { PropType, toRef } from "vue";
+import { toRef } from "vue";
+import { User } from "../utils/types";
 
 const columns = defineVaDataTableColumns([
   { label: "Name", key: "fullName", sortable: true },
@@ -62,20 +63,20 @@ const columns = defineVaDataTableColumns([
 
 const props = defineProps({
   users: {
-    type: Array as PropType<{ fullName: string; email: string }[]>,
+    type: Array as () => User[],
     required: true,
   },
   loading: { type: Boolean, default: false },
 });
 
 const emit = defineEmits<{
-  (event: "edit-user", user: { fullName: string; email: string }): void;
-  (event: "delete-user", user: { fullName: string; email: string }): void;
+  (event: "edit-user", user: User): void;
+  (event: "delete-user", user: User): void;
 }>();
 
 const users = toRef(props, "users");
 
-const onUserDelete = (user: { fullName: string; email: string }) => {
+const onUserDelete = (user: User) => {
   if (confirm(`Are you sure you want to delete ${user.fullName}?`)) {
     emit("delete-user", user);
   }

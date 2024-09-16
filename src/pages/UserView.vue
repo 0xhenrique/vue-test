@@ -54,25 +54,24 @@
 </template>
 
 <script setup lang="ts">
- import { ref, onMounted, computed } from "vue";
+ import { ref, onMounted, computed, watch } from "vue";
  import UsersTable from "../components/UsersTable.vue";
  import EditUserForm from "../components/EditUserForm.vue";
  import Layout from "../components/Layout.vue";
  import { User } from "../utils/types";
  import { UserStore } from "../stores/users.ts";
- import { useModal, useToast } from "vuestic-ui";
+ import { useToast } from "vuestic-ui";
 
  const { init: notify } = useToast();
- const { confirm } = useModal();
 
  const store = UserStore();
- const users = ref([]);
- const userToEdit = ref<User | null>(null);
+ const users = ref<User[]>([]);
+ const userToEdit = ref<User | null | undefined>(null);
  const doShowEditUserModal = ref(false);
  const editFormRef = ref();
  const searchTerm = ref("");
  const currentPage = ref(1);
- const itemsPerPage = ref(10);
+ const itemsPerPage = ref(5);
  const totalUsers = computed(() => users.value.length);
 
  store.getUserList();
@@ -82,24 +81,29 @@
    users.value = store.userList;
  });
 
- const filteredUsers = computed(() => {
-   if (!searchTerm.value) {
-     return users.value;
-   }
-   
-   return users.value.filter((user) => {
-     return (
-       user.fullName.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-       user.email.toLowerCase().includes(searchTerm.value.toLowerCase())
-     );
-   });
- });
+const filteredUsers = computed<User[]>(() => {
+  if (!searchTerm.value) {
+    return users.value;
+  }
 
- const paginatedUsers = computed(() => {
-   const start = (currentPage.value - 1) * itemsPerPage.value;
-   const end = start + itemsPerPage.value;
-   return filteredUsers.value.slice(start, end);
- });
+  return users.value.filter((user: User) => {
+    return (
+      user.fullName?.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.value.toLowerCase())
+    );
+  });
+});
+
+
+const paginatedUsers = computed<User[]>(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredUsers.value.slice(start, end);
+});
+
+watch(searchTerm, () => {
+  currentPage.value = 1;
+});
 
  const nextPage = () => {
    if (currentPage.value * itemsPerPage.value < totalUsers.value) {
@@ -113,7 +117,7 @@
    }
  };
 
- const editUser = async (user: User) => {
+ const editUser = async (user: any | null) => {
    await store.updateUserById({
      fullName: user.fullName,
      email: user.email,
@@ -121,12 +125,12 @@
    });
  };
 
- const deleteUser = async (user: User) => {
+ const deleteUser = async (user: any | null) => {
    await store.deleteUserById(user.id);
-   users.value = users.value.filter(o => o.id !== user.id);
+   users.value = users.value.filter((o: User) => o.id !== user.id);
  }
 
- const addUser = async (newUser: User) => {
+ const addUser = async (newUser: any | null) => {
    await store.setNewUser({
      fullName: newUser.fullName,
      email: newUser.email,
@@ -134,7 +138,7 @@
    });
  };
 
- const onUserSaved = async (user: User) => {
+ const onUserSaved = async (user: any | null) => {
    if (userToEdit.value) {
      await editUser(user);
      notify({
@@ -153,7 +157,7 @@
    users.value = store.userList;
  };
 
- const showEditUserModal = (user: User) => {
+ const showEditUserModal = (user: any | null) => {
    userToEdit.value = user;
    doShowEditUserModal.value = true;
  };

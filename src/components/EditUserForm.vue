@@ -11,7 +11,7 @@
           v-model="newUser.fullName"
           label="Full name"
           class="w-full"
-          :rules="[val => !!val || 'Full name is required']"
+          :rules="[validation.required]"
           name="fullName"
         />
 
@@ -19,7 +19,7 @@
           v-model="newUser.email"
           label="Email"
           class="w-full"
-          :rules="[val => !!val || 'Email is required']"
+          :rules="[validation.required, validation.email]"
           name="email"
         />
 
@@ -30,7 +30,7 @@
           label="Password"
           type="password"
           class="w-full"
-          :rules="[val => !!val || 'Password is required']"
+          :rules="[validation.required]"
           name="password"
         />
       </template>
@@ -41,7 +41,7 @@
           v-model="newOrder.product"
           label="Product"
           class="w-full"
-          :rules="[val => !!val || 'Product is required']"
+          :rules="[validation.required]"
           name="product"
         />
 
@@ -50,7 +50,7 @@
           label="Date of Order"
           type="date"
           class="w-full"
-          :rules="[val => !!val || 'Date of Order is required']"
+          :rules="[validation.required]"
           name="dateOrder"
         />
       </template>
@@ -64,21 +64,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, PropType } from "vue";
 import { useForm } from "vuestic-ui";
-
-type User = {
-  id?: number;
-  fullName: string;
-  email: string;
-  password?: string;
-}
-
-type Order = {
-   userId: string;
-   product: string;
-   dateOrder: string;
-}
+import { User, Order } from "../utils/types";
 
 const props = defineProps({
   user: {
@@ -103,7 +91,7 @@ const defaultNewUser: User = {
 };
 
 const defaultNewOrder: Order = {
-  userId: "",
+  userId: -1,
   product: "",
   dateOrder: "",
 };
@@ -117,7 +105,7 @@ watch(
     if (props.user) {
       newUser.value = {
         ...props.user,
-        password: "",  // Reset password for existing users
+        password: "",
       };
     }
   },
@@ -135,6 +123,14 @@ watch(
 );
 
 const form = useForm("add-user-form");
+
+const validation = {
+  required: (v: any) => !!v || "Required field",
+  email: (v: string) => {
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return pattern.test(v) || "Needs to be a valid email";
+  },
+}
 
 const emit = defineEmits(["close", "save"]);
 

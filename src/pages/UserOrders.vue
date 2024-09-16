@@ -1,15 +1,5 @@
 <template>
-  <AppLayout>
-    <div class="flex flex-row content-center pb-5 gap-2">
-      <VaButton
-	round
-	color="warning"
-	:to="{ path: '/' }"
-      >
-	Return Home
-      </VaButton>
-      <h1 class="text-2xl text-white">Orders View - {{ $route.params.id }}</h1>
-    </div>
+  <Layout>
     <VaCard>
       <VaCardContent>
 	<div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
@@ -45,12 +35,12 @@
       close-button
       hide-default-actions
     >
-      <h1 class="va-h5">{{ orderToEdit.product ? "Edit order" : "Add order" }}</h1>
+      <h1 class="va-h5">{{ orderToEdit?.product ? "Edit order" : "Add order" }}</h1>
       <EditUserForm
 	ref="editFormRef"
 	:order="orderToEdit"
 	:user="null"
-	:save-button-label="orderToEdit.product ? 'Save' : 'Add'"
+	:save-button-label="orderToEdit?.product ? 'Save' : 'Add'"
 	@close="cancel"
 	@save="
         (order) => {
@@ -60,35 +50,34 @@
 	"
       />
     </VaModal>
-  </AppLayout>
+  </Layout>
 </template>
 
 <script setup lang="ts">
  import { ref, onMounted, computed } from "vue";
  import { useRoute } from 'vue-router';
- import AppLayout from "../components/AppLayout.vue";
+ import Layout from "../components/Layout.vue";
  import OrdersTable from "../components/OrdersTable.vue";
  import EditUserForm from "../components/EditUserForm.vue";
- import { User } from "./types";
+ import { Order } from "../utils/types";
  import { OrderStore } from "../stores/orders.ts";
- import { useModal, useToast } from "vuestic-ui";
+ import { useToast } from "vuestic-ui";
 
  const { init: notify } = useToast();
- const { confirm } = useModal();
-const route = useRoute();
+ const route = useRoute();
 
  const store = OrderStore();
- const orders = ref([]);
- const orderToEdit = ref<User | null>(null);
+ const orders = ref<Order[] | null>([]);
+ const orderToEdit = ref<Order | null>(null);
  const doShowEditOrderModal = ref(false);
  const editFormRef = ref();
  const searchTerm = ref("");
  const currentPage = ref(1);
- const itemsPerPage = ref(10);
- const totalOrders = computed(() => orders.value.length);
+ const itemsPerPage = ref(5);
+ const totalOrders = computed(() => orders.value?.length ?? 0);
 
  onMounted(async () => {
-   await store.getOrderList(route.params.id);
+   await store.getOrderList(Number(route.params.id));
    orders.value = store.orderList;
  });
 
@@ -98,21 +87,21 @@ const route = useRoute();
      return orders.value;
    }
    
-   return orders.value.filter((order) => {
+   return orders?.value?.filter((order: Order) => {
      return (
-       order.product.toLowerCase().includes(searchTerm.value.toLowerCase())
+       order?.product?.toLowerCase().includes(searchTerm.value.toLowerCase())
      );
    });
  });
 
- const paginatedOrders = computed(() => {
-   const start = (currentPage.value - 1) * itemsPerPage.value;
-   const end = start + itemsPerPage.value;
-   return filteredOrders.value.slice(start, end);
- });
+const paginatedOrders = computed<Order[]>(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredOrders.value?.slice(start, end) ?? [];
+});
 
  const nextPage = () => {
-   if (currentPage.value * itemsPerPage.value < totalOrders.value) {
+   if (currentPage.value * itemsPerPage.value < (totalOrders.value ?? 0)) {
      currentPage.value++;
    }
  };
@@ -123,26 +112,28 @@ const route = useRoute();
    }
  };
 
- const addOrder = async (newOrder) => {
-   await store.setNewOrder({
-     orderDate: newOrder.dateOrder,
-     product: newOrder.product,
-     userId: newOrder.userId,
-   });
- };
+const addOrder = async (newOrder: Order) => {
+  await store.setNewOrder({
+    orderDate: newOrder.dateOrder ?? "",
+    product: newOrder.product ?? "",
+    userId: String(newOrder.userId ?? ""),
+  });
+};
 
- const editOrder = async (order: Order) => {
-   await store.updateOrderById({
-     orderDate: order.dateOrder,
-     product: order.product,
-     id: order.id,
-   });
- };
+const editOrder = async (order: Order) => {
+  await store.updateOrderById({
+    orderDate: order.dateOrder ?? '',
+    product: order.product ?? '',
+    id: Number(order.id),
+  });
+};
 
- const deleteOrder = async (order: User) => {
-   await store.deleteOrderById(order.id);
-   orders.value = orders.value.filter(o => o.id !== order.id);
- }
+const deleteOrder = async (order: Order) => {
+  await store.deleteOrderById(Number(order.id));
+  if (orders.value) {
+    orders.value = orders.value.filter(o => o.id !== order.id);
+  }
+};
 
  const onOrderSaved = async (order: Order) => {
    if (orderToEdit.value?.id) {
@@ -158,18 +149,18 @@ const route = useRoute();
        color: "success",
      });
    }
-   await store.getOrderList(route.params.id);
+   await store.getOrderList(Number(route.params.id));
    orders.value = store.orderList;
  };
 
- const showEditOrderModal = (order: User) => {
+ const showEditOrderModal = (order: Order) => {
    orderToEdit.value = order;
    doShowEditOrderModal.value = true;
  };
 
-const showAddOrderModal = (userId: string) => {
+const showAddOrderModal = () => {
   orderToEdit.value = {
-    userId: route.params.id,
+    userId: Number(route.params.id),
     product: '',
     dateOrder: new Date().toISOString(),
   };
