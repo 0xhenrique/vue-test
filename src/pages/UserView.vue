@@ -1,6 +1,5 @@
 <template>
-  <AppLayout>
-    <h1 class="text-2xl pb-5 text-white">Users list</h1>
+  <Layout>
     <VaCard>
       <VaCardContent>
 	<div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
@@ -51,15 +50,15 @@
       />
     </VaModal>
     <h3 class="text-white pt-5">Tip: To view the user's orders list you can also click on the user's name.</h3>
-  </AppLayout>
+  </Layout>
 </template>
 
 <script setup lang="ts">
  import { ref, onMounted, computed } from "vue";
  import UsersTable from "../components/UsersTable.vue";
  import EditUserForm from "../components/EditUserForm.vue";
- import AppLayout from "../components/AppLayout.vue";
- import { User } from "./types";
+ import Layout from "../components/Layout.vue";
+ import { User } from "../utils/types";
  import { UserStore } from "../stores/users.ts";
  import { useModal, useToast } from "vuestic-ui";
 
@@ -127,7 +126,7 @@
    users.value = users.value.filter(o => o.id !== user.id);
  }
 
- const addUser = async (newUser) => {
+ const addUser = async (newUser: User) => {
    await store.setNewUser({
      fullName: newUser.fullName,
      email: newUser.email,
