@@ -1,60 +1,60 @@
 <template>
-  <Layout>
-    <VaCard>
-      <VaCardContent>
-	<div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
-	  <VaInput v-model="searchTerm" placeholder="Search">
-	    <template #prependInner>
-	      <VaIcon name="search" color="secondary" size="small" />
-	    </template>
-	  </VaInput>
-	  <VaButton @click="showAddOrderModal">Add Order</VaButton>
-	</div>
-
-	<OrdersTable
-          :orders="paginatedOrders"
-          @edit-order="showEditOrderModal"
-          @delete-order="deleteOrder"
+<Layout>
+  <VaCard>
+    <VaCardContent>
+      <div class="flex flex-col md:flex-row gap-2 mb-2 justify-between">
+	<VaInput v-model="searchTerm" placeholder="Search">
+	  <template #prependInner>
+	    <VaIcon name="search" color="secondary" size="small" />
+	  </template>
+	</VaInput>
+	<VaButton @click="showAddOrderModal">Add Order</VaButton>
+      </div>
+      
+      <OrdersTable
+	:orders="paginatedOrders"
+	@edit-order="showEditOrderModal"
+	@delete-order="deleteOrder"
 	/>
-
-	<VaDivider />
-
-	<div class="flex flex-row justify-center gap-2 mt-5">
-	  <VaButton @click="prevPage" :disabled="currentPage === 1">Previous</VaButton>
-	  <p class="leading-none self-center">Page {{ currentPage }} of {{ Math.ceil(totalOrders / itemsPerPage) }}</p>
-	  <VaButton @click="nextPage" :disabled="currentPage * itemsPerPage >= totalOrders">Next</VaButton>
-	</div>
-      </VaCardContent>
-    </VaCard>
-
-    <VaModal
-      v-slot="{ cancel, ok }"
-      v-model="doShowEditOrderModal"
-      size="small"
-      mobile-fullscreen
-      close-button
-      hide-default-actions
+      
+      <VaDivider />
+      
+      <div class="flex flex-row justify-center gap-2 mt-5">
+	<VaButton @click="prevPage" :disabled="currentPage === 1">Previous</VaButton>
+	<p class="leading-none self-center">Page {{ currentPage }} of {{ Math.ceil(totalOrders / itemsPerPage) }}</p>
+	<VaButton @click="nextPage" :disabled="currentPage * itemsPerPage >= totalOrders">Next</VaButton>
+      </div>
+    </VaCardContent>
+  </VaCard>
+  
+  <VaModal
+    v-slot="{ cancel, ok }"
+    v-model="doShowEditOrderModal"
+    size="small"
+    mobile-fullscreen
+    close-button
+    hide-default-actions
     >
-      <h1 class="va-h5">{{ orderToEdit?.product ? "Edit order" : "Add order" }}</h1>
-      <EditUserForm
-	ref="editFormRef"
-	:order="orderToEdit"
-	:user="null"
-	:save-button-label="orderToEdit?.product ? 'Save' : 'Add'"
-	@close="cancel"
-	@save="
-        (order) => {
-          onOrderSaved(order);
-          ok();
-        }
-	"
+    <h1 class="va-h5">{{ orderToEdit?.product ? "Edit order" : "Add order" }}</h1>
+    <EditUserForm
+      ref="editFormRef"
+      :order="orderToEdit"
+      :user="null"
+      :save-button-label="orderToEdit?.product ? 'Save' : 'Add'"
+      @close="cancel"
+      @save="async (order) => {
+	     const success = await onOrderSaved(order);
+	     if (success) {
+	     ok();
+	     }
+	     }"
       />
     </VaModal>
   </Layout>
 </template>
 
 <script setup lang="ts">
- import { ref, onMounted, computed } from "vue";
+ import { ref, onMounted, computed, watch } from "vue";
  import { useRoute } from 'vue-router';
  import Layout from "../components/Layout.vue";
  import OrdersTable from "../components/OrdersTable.vue";
@@ -82,17 +82,21 @@
  });
 
 
- const filteredOrders = computed(() => {
-   if (!searchTerm.value) {
-     return orders.value;
-   }
-   
-   return orders?.value?.filter((order: Order) => {
-     return (
-       order?.product?.toLowerCase().includes(searchTerm.value.toLowerCase())
-     );
-   });
+ const filteredOrders = computed<Order[]>(() => {
+  const allOrders = orders.value || [];
+
+  if (!searchTerm.value) {
+    return allOrders;
+  }
+
+  return allOrders.filter((order: Order) => {
+    return order.product?.toLowerCase().includes(searchTerm.value.toLowerCase());
+  });
  });
+
+watch(searchTerm, () => {
+  currentPage.value = 1;
+});
 
 const paginatedOrders = computed<Order[]>(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
@@ -113,45 +117,60 @@ const paginatedOrders = computed<Order[]>(() => {
  };
 
 const addOrder = async (newOrder: Order) => {
-  await store.setNewOrder({
-    orderDate: newOrder.dateOrder ?? "",
-    product: newOrder.product ?? "",
-    userId: String(newOrder.userId ?? ""),
-  });
+  if (!newOrder) return;
+  console.log("everythin: ", newOrder)
+  await store.setNewOrder(newOrder);
 };
 
 const editOrder = async (order: Order) => {
-  await store.updateOrderById({
-    orderDate: order.dateOrder ?? '',
-    product: order.product ?? '',
-    id: Number(order.id),
-  });
+  if (!order) return;
+  await store.updateOrderById(order);
 };
 
 const deleteOrder = async (order: Order) => {
-  await store.deleteOrderById(Number(order.id));
+  await store.deleteOrderById(order);
   if (orders.value) {
-    orders.value = orders.value.filter(o => o.id !== order.id);
+    orders.value = orders.value.filter((o: Order) => o.id !== order.id);
   }
 };
 
- const onOrderSaved = async (order: Order) => {
-   if (orderToEdit.value?.id) {
-     await editOrder(order);
-     notify({
-       message: "Order has been updated",
-       color: "success",
-     });
-   } else {
-     await addOrder(order);
-     notify({
-       message: "New order has been created",
-       color: "success",
-     });
-   }
-   await store.getOrderList(Number(route.params.id));
-   orders.value = store.orderList;
- };
+const onOrderSaved = async (order: Order): Promise<boolean> => {
+  if (!order) return true;
+
+  try {
+    const isEdit = Boolean(orderToEdit.value?.id ? true : false);
+    const action = isEdit ? editOrder : addOrder;
+    const successMessage = isEdit
+      ? "Order has been updated"
+      : "New order has been created";
+
+    await action(order);
+
+    notify({
+      message: successMessage,
+      color: "success",
+    });
+
+    await refreshOrderList();
+    return true;
+  } catch (error) {
+    handleSaveError(error);
+    return false;
+  }
+};
+
+const refreshOrderList = async () => {
+    await store.getOrderList(Number(route.params.id));
+    orders.value = store.orderList;
+}
+
+const handleSaveError = (error: any) => {
+  notify({
+    message: "An error occurred while saving the order. Please try again.",
+    color: "danger",
+  });
+  console.log(error)
+};
 
  const showEditOrderModal = (order: Order) => {
    orderToEdit.value = order;
@@ -159,10 +178,13 @@ const deleteOrder = async (order: Order) => {
  };
 
 const showAddOrderModal = () => {
+  if (!route.params.id) return;
+
   orderToEdit.value = {
+    id: null,
     userId: Number(route.params.id),
-    product: '',
-    dateOrder: new Date().toISOString(),
+    product: "",
+    dateOrder: ""
   };
   doShowEditOrderModal.value = true;
 };

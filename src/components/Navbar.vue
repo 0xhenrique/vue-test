@@ -9,7 +9,7 @@
     </template>
 
     <template #right>
-      <h1>Navbar Right</h1>
+      <h1>λ</h1>
     </template>
   </VaNavbar>
 </template>

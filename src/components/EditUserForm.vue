@@ -88,12 +88,18 @@ const defaultNewUser: User = {
   fullName: "",
   email: "",
   password: "",
+  created_at: new Date(),
+  updated_at: new Date(),
 };
 
 const defaultNewOrder: Order = {
-  userId: -1,
+  id: -1,
   product: "",
+  userId: -1,
+  order_date: "",
   dateOrder: "",
+  created_at: "",
+  updated_at: "",
 };
 
 const newUser = ref<User>({ ...defaultNewUser });
