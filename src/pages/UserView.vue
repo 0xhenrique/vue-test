@@ -120,11 +120,6 @@ watch(searchTerm, () => {
  const editUser = async (user: User) => {
   if (!user) return;
   await store.updateUserById(user);
-   // await store.updateUserById({
-   //   fullName: user.fullName,
-   //   email: user.email,
-   //   id: user.id
-   // });
  };
 
  const deleteUser = async (user: User) => {
@@ -134,13 +129,7 @@ watch(searchTerm, () => {
 
  const addUser = async (newUser: User) => {
   if (!newUser) return;
-  
   await store.setNewUser(newUser);
-   // await store.setNewUser({
-   //   fullName: newUser.fullName,
-   //   email: newUser.email,
-   //   password: newUser.password
-   // });
  };
 
 const onUserSaved = async (user: User): Promise<boolean> => {

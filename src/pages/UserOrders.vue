@@ -118,7 +118,6 @@ const paginatedOrders = computed<Order[]>(() => {
 
 const addOrder = async (newOrder: Order) => {
   if (!newOrder) return;
-  console.log("everythin: ", newOrder)
   await store.setNewOrder(newOrder);
 };
 
